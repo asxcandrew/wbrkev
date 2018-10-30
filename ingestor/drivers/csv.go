@@ -3,7 +3,6 @@ package drivers
 import (
 	"bufio"
 	"encoding/csv"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -34,8 +33,7 @@ func (d csvdriver) Parse(file *os.File, ch chan interface{}) error {
 			log.Fatal(error)
 			return error
 		}
-
-		fmt.Println(line)
+		ch <- line
 	}
 	return nil
 }

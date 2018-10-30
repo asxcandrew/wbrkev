@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/asxcandrew/wbrkev/ingestor/drivers"
 	pb "github.com/asxcandrew/wbrkev/protos"
@@ -32,6 +34,7 @@ type Server struct {
 var server Server
 
 func init() {
+	fmt.Println("Starting ingestor service...")
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
 	}
@@ -44,6 +47,21 @@ func init() {
 
 	server.ch = make(chan interface{})
 	server.grpcClient = pb.NewIngestorClient(conn)
+
+	go func() {
+		for c := range server.ch {
+			raw := c.([]string)
+
+			customer := &Customer{
+				Name:         raw[1],
+				Email:        raw[2],
+				MobileNumber: raw[3],
+			}
+			customer.adjustValues()
+
+			server.pushCustomer(customer)
+		}
+	}()
 }
 
 func main() {
@@ -56,19 +74,19 @@ func main() {
 	fileDriver := drivers.Driver(inputDriver)
 	err = fileDriver.Parse(file, server.ch)
 
-	for c := range server.ch {
-		customer := c.(*Customer)
-
-		server.pushCustomer(customer)
-	}
-
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
 func (s *Server) pushCustomer(customer *Customer) {
-	response, err := s.grpcClient.PushCustomer(context.Background(), &pb.CustomerResponse{Name: "someone"})
+	fmt.Println(customer)
+	pbCustomer := &pb.CustomerResponse{
+		Name:         customer.Name,
+		Email:        customer.Email,
+		MobileNumber: customer.MobileNumber,
+	}
+	response, err := s.grpcClient.PushCustomer(context.Background(), pbCustomer)
 
 	if err != nil {
 		fmt.Printf("Failed to send customer: %v\n", err)
@@ -76,4 +94,12 @@ func (s *Server) pushCustomer(customer *Customer) {
 	}
 
 	fmt.Printf("Customer sent, response: %v\n", response)
+}
+
+func (c *Customer) adjustValues() {
+	re := regexp.MustCompile("[0-9]+")
+	digits := re.FindAllString(c.MobileNumber, -1)
+	digits = append([]string{"+44"}, digits...)
+
+	c.MobileNumber = strings.Join(digits[:], "")
 }
