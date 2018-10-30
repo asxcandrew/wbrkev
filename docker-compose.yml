@@ -1,0 +1,56 @@
+version: "3"
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.27.0.0/24
+services:
+  grpc:
+    build:
+      context: build
+      dockerfile: Dockerfile.grpc
+    networks:
+      localnet:
+        ipv4_address: 172.27.0.5
+  ingestor:
+    build:
+      context: build
+      dockerfile: Dockerfile.ingestor
+    networks:
+      localnet:
+        ipv4_address: 172.27.0.2
+    depends_on:
+      - grpc
+  keeper:
+    build:
+      context: build
+      dockerfile: Dockerfile.keeper
+    networks:
+      localnet:
+        ipv4_address: 172.27.0.3
+    depends_on:
+      - grpc
+      - database
+      - ingestor
+    environment:
+      - KEEPER_DBHOST=172.27.0.10
+      - KEEPER_DBPORT=5432
+      - KEEPER_DBUSER=docker
+      - KEEPER_DBPASS=docker
+      - KEEPER_DBNAME=ingestor_db
+  database:
+    image: postgres:10
+    networks:
+      localnet:
+        ipv4_address: 172.27.0.10
+    ports:
+      - "5432"
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - PGDATA=/pgdata
+    volumes:
+      - ./config/db/dbdata:/var/lib/postgresql/db-data
+      - ./config/db/init.sql:/docker-entrypoint-initdb.d/init.sql

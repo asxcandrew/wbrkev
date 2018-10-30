@@ -1,0 +1,8 @@
+FROM alpine:3.8
+
+COPY ./ingestor /home/builds/
+COPY ./data.csv /home/builds/
+WORKDIR /home/builds
+
+ENTRYPOINT ["./ingestor"]
+EXPOSE 3000

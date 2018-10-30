@@ -1,0 +1,8 @@
+FROM alpine:3.8
+
+COPY ./grpc /home/builds/
+WORKDIR /home/builds
+
+ENTRYPOINT ["./grpc"]
+
+EXPOSE 50051

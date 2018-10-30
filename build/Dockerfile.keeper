@@ -1,0 +1,7 @@
+FROM alpine:3.8
+
+COPY ./keeper /home/builds/
+WORKDIR /home/builds
+
+ENTRYPOINT ["./keeper"]
+EXPOSE 3001
