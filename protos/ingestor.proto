@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package protos;
+
+service Ingestor {
+  rpc GetCustomers(CustomerRequest) returns (stream CustomerResponse) {}
+  rpc PushCustomer (CustomerResponse) returns (StatusRequest) {}
+}
+
+message StatusRequest {
+  string status = 1;
+}
+
+message CustomerRequest {
+  int32 id = 1;
+}
+
+message CustomerResponse {
+  string name = 2;
+  string email = 3;
+  string mobile_number = 4;
+}
