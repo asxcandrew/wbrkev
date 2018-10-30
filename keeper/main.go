@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 
+	"github.com/asxcandrew/wbrkev/keeper/db"
 	pb "github.com/asxcandrew/wbrkev/protos"
 	"google.golang.org/grpc"
 )
@@ -41,6 +42,12 @@ func main() {
 		if err != nil {
 			log.Fatalf("%v.GetCustomers(_) = _, %v", client, err)
 		}
+
+		err = db.DB().Insert(&db.Customer{
+			Name:         customer.Name,
+			Email:        customer.Email,
+			MobileNumber: customer.MobileNumber,
+		})
 
 		if err != nil {
 			log.Println(err)
